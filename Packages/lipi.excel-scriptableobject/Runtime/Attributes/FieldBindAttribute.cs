@@ -4,12 +4,15 @@ using System;
 
 public class FieldBindAttribute : Attribute
 {
-    public string FieldName;
+    public string FieldName { get; }
     public bool IsKey = false;
+
 
     public FieldBindAttribute(string fieldName)
     {
         FieldName = fieldName;
     }
+
+
 
 }

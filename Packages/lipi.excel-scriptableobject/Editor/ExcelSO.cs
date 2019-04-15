@@ -13,10 +13,6 @@ namespace ExcelScriptableObject
 
         public static void SOtoExcel(SOList soList, ExcelSheet excelSheet)
         {
-            //var map = excelSheet.ToExcelMapper(1, 2, "ID");
-            //map["30002", "PrefabName"].Value = "狗日的";
-            //map.Save();
-            //map.Dispose();
 
             var bindInfo = soList.BindInfo;
             using(var map = excelSheet.ToExcelMapper(bindInfo.HeadRow, bindInfo.StartRow, bindInfo.Key))
@@ -68,6 +64,11 @@ namespace ExcelScriptableObject
                     var so = soList.List[j];
                     var DynObj = Dyn.Object(so);
                     var item = DynObj.Q<KeyFieldBindAttribute>().GetValue();
+
+                    //if(item.ToString() == keyValue.ToString())
+                    //{
+                    //    Debug.Log($"=={ConvertAndEquals(item, keyValue)}");
+                    //}
                     
                     if (item != null && ConvertAndEquals(item, keyValue))// item.ToString() == keyValue.ToString())// item.Equals(keyValue))
                     {
@@ -88,7 +89,18 @@ namespace ExcelScriptableObject
                     {
                         DynObj.Q<FieldBindAttribute>((attr) => attr.FieldName == rowItem.Key).SetValue(rowItem.Value);
                     }
-                    AssetDatabase.CreateAsset(so, $"{soList.Path}/{keyValue}.asset");
+                    var assetInfo = so as INewAsset;
+                    var pathFileName = assetInfo == null ? keyValue.ToString() : assetInfo.NewAsset().GetPath();
+                    var pathAll = $"{soList.Path}/{pathFileName}.asset";
+                    if (assetInfo != null)
+                    {
+                        AssetDatabase.CreateAsset(so, pathAll);
+                        AssetImporter.GetAtPath(pathAll).assetBundleName = assetInfo.NewAsset().AssetBundle;
+                    } else
+                    {
+                        AssetDatabase.CreateAsset(so, pathAll);
+                    }
+                    
                 }
             }
         }
@@ -98,7 +110,7 @@ namespace ExcelScriptableObject
         private static bool ConvertAndEquals(object hostValue, object convertValue)
         {
             var newVal = Convert.ChangeType(convertValue, hostValue.GetType());
-            return hostValue == newVal;
+            return hostValue.Equals(newVal);
         }
 
     }

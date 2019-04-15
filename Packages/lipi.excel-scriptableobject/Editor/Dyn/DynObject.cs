@@ -65,6 +65,16 @@ namespace ExcelScriptableObject
 
 
 
+
+        public DynMethod Method(string name)
+        {
+            if (IsNull) return DynMethod.Null;
+            var m = _inst.GetType().GetMethod(name, BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public);
+            return new DynMethod(m,_inst);
+        }
+
+
+
         public DynMember Q(string name)
         {
             if (IsNull) return DynMember.Null;

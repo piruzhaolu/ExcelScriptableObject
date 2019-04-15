@@ -23,11 +23,11 @@ namespace ExcelScriptableObject
             // 空对象
         }
 
-        public DynMember(MemberInfo info, object inst)
-        {
-            _memberInfo = info;
-            _inst = inst;
-        }
+        //public DynMember(MemberInfo info, object inst)
+        //{
+        //    _memberInfo = info;
+        //    _inst = inst;
+        //}
 
         public DynMember(FieldInfo info, object inst)
         {
@@ -53,10 +53,19 @@ namespace ExcelScriptableObject
                 if (IsNull) return string.Empty;
 
                 if (_fieldInfo != null) return _fieldInfo.Name;
-                else if (_propertyInfo != null) return _fieldInfo.Name;
+                else if (_propertyInfo != null) return _propertyInfo.Name;
                 else if (_memberInfo != null) return _memberInfo.Name;
                 else return string.Empty;
             }
+        }
+
+        public T GetAttribute<T>() where T:Attribute
+        {
+            if (IsNull) return null;
+            if (_fieldInfo != null) return _fieldInfo.GetCustomAttribute<T>();
+            else if (_propertyInfo != null) return _propertyInfo.GetCustomAttribute<T>();
+            else if (_memberInfo != null) return _memberInfo.GetCustomAttribute<T>();
+            else return null;
         }
 
 
@@ -102,6 +111,9 @@ namespace ExcelScriptableObject
         /// <returns></returns>
         private object _getRealValue(object value,  Type infoType)
         {
+            var inMethod = GetAttribute<InMethodAttribute>();
+            if (inMethod != null) return Dyn.Object(_inst).Method(inMethod.MethodName).Invoke(value);
+
             object realValue;
             if (infoType.IsValueType)
             {
@@ -153,9 +165,18 @@ namespace ExcelScriptableObject
         public object GetValue()
         {
             if (IsNull) return null;
-            if (_fieldInfo != null) return _fieldInfo.GetValue(_inst);
-            else if (_propertyInfo != null) return  _propertyInfo.GetValue(_inst);
-            return null;
+            object returnValue = null;
+            if (_fieldInfo != null) returnValue = _fieldInfo.GetValue(_inst);
+            else if (_propertyInfo != null) returnValue = _propertyInfo.GetValue(_inst);
+
+            var method = GetAttribute<OutMethodAttribute>();
+            if (method == null)
+            {
+                return returnValue;
+            } else
+            {
+                return Dyn.Object(_inst).Method(method.MethodName).Invoke(returnValue);
+            }
         }
 
     }
